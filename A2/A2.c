@@ -30,33 +30,37 @@
 #include <pthread.h>
 #include <stdlib.h>
 
-#define int BUFFER_SIZE = 5;
-
-int n, i, bufferIndex;
-int buffer[BUFFER_SIZE];
-
+int n, i, bufferSize, bufferIndex, *buffer;
+int *pidProd, *pidCons;
 
 /* semaphore s=1  and delay=0 */
 sem_t mutex; /* prevents multiple accesses to the buffer */
 sem_t emptyCount; /* checks if buffer is empty */
 sem_t fillCount; /* checks if buffer is full  */
-pthread_t producerThread;
-pthread_t consumerThread;
 
+void *producer();
+void *consumer();
 
-void main(int argc, char *argv[])
-{
+void main(int argc, char *argv[]){
+	if (argc != 4){
+		printf("arguments need to be int in the format C P B");
+		perror("Wrong number of arguments");
+	}
+	int numProd = atoi(argv[1]);
+	int numCons = atoi(argv[2]);
+	bufferSize = atoi(argv[3]);
 
-	(void)argc;
-	(void)argv;
 	/* Initialize semaphore s to 1  and delay to 0 */
 	sem_init(&mutex, 0, 1);
-	sem_init(&emptyCount, 0, 0);
-
+	sem_init(&emptyCount, 0, bufferSize);
+	sem_init(&fillCount, 0, 0);
 	n=0;
 
-	pthread_create(&producerThread, NULL, produce(), );
-	pthread_create(&consumerThread, Null, produce(), )
+	pthread_t producerThreads[numProd];
+	pthread_t consumerThreads[numCons];
+
+	pidProd[0] = pthread_create(&producerThreads[0], NULL, producer, NULL); //TODO: turn this into for loop
+	pidCons[0] = pthread_create(&consumerThreads[0], NULL, consumer, NULL);
 	/* producer generates requests to print r (random number) pages every 5 seconds */
 	/* producer will make new thread for each request */
 	/*  */
@@ -94,23 +98,4 @@ void *consumer() {
 			sem_wait(&emptyCount);
 		}
 	}
-}
-
-void main(int argc, char *argv[])
-{
-
-	(void)argc;
-	(void)argv;
-	/* Initialize semaphore s to 1  and delay to 0 */
-	sem_init(&mutex, 0, 1);
-	sem_init(&emptyCount, 0, 0);
-
-	n=0;
-
-	pthread_create(&producerThread, NULL, produce(), );
-	pthread_create(&consumerThread, Null, produce(), )
-	/* producer generates requests to print r (random number) pages every 5 seconds */
-	/* producer will make new thread for each request */
-	/*  */
-	/*  */
 }
