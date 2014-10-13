@@ -30,16 +30,17 @@
 #include <pthread.h>
 #include <stdlib.h>
 
-int n, i, bufferSize, bufferIndex, *buffer;
+int bufferSize, bufferIndex, *buffer;
 int *pidProd, *pidCons;
+int num;
 
 /* semaphore s=1  and delay=0 */
 sem_t mutex; /* prevents multiple accesses to the buffer */
 sem_t emptyCount; /* checks if buffer is empty */
 sem_t fillCount; /* checks if buffer is full  */
 
-void *producer();
-void *consumer();
+void *producer(int clientNum);
+void *consumer(int printerNum);
 
 void main(int argc, char *argv[]){
 	if (argc != 4){
@@ -54,13 +55,14 @@ void main(int argc, char *argv[]){
 	sem_init(&mutex, 0, 1);
 	sem_init(&emptyCount, 0, bufferSize);
 	sem_init(&fillCount, 0, 0);
-	n=0;
+
+	printf("everything is initialized\n\n");
 
 	pthread_t producerThreads[numProd];
 	pthread_t consumerThreads[numCons];
 
-	pidProd[0] = pthread_create(&producerThreads[0], NULL, producer, NULL); //TODO: turn this into for loop
-	pidCons[0] = pthread_create(&consumerThreads[0], NULL, consumer, NULL);
+	pidProd[0] = pthread_create(&producerThreads[0], NULL, producer, 0); //TODO: turn this into for loop
+	pidCons[0] = pthread_create(&consumerThreads[0], NULL, consumer, 0);
 	/* producer generates requests to print r (random number) pages every 5 seconds */
 	/* producer will make new thread for each request */
 	/*  */
@@ -69,33 +71,32 @@ void main(int argc, char *argv[]){
 
 
 /* application that is printing */
-void *producer() {
+void *producer(int clientNum) {
 	while (1) {
 		//produce item
 		//request to print r number of pages where r is a random number between 1 and 10
-		sem_wait(&mutex);
-		//put item in buffer
-		n++;
-		if (n == 1){
-			sem_post(&emptyCount);
-		}
-		sem_post(&mutex);
+		num = 2;
+		printf("Client %d has %d pages to print, ",pidProd[clientNum], num);
+		sem_wait(&emptyCount);
+			sem_wait(&mutex);
+				//put item in buffer
+				buffer[bufferIndex] = num;
+				printf("puts request in buffer %d",bufferIndex);
+				bufferIndex = (bufferIndex+1)%bufferSize; //increment bufferIndex
+			sem_post(&mutex);
+		sem_post(&fillCount);
 	}
 }
 /* printer */
 //printer also needs to sleep when printing the pages (if printing 6 pages should sleep for 6 second)
-void *consumer() {
-	int m;
+void *consumer(int printerNum) {
 	while (1) {
-		sem_wait(&mutex);
-		//take item from buffer
-		n--;
-		m = n;
-		sem_post(&mutex);
+		sem_wait(&fillCount);
+			sem_wait(&mutex);
+				//remove item from buffer
+			sem_post(&mutex);
+		sem_post(&emptyCount);
 		//consume - print the item
 		//should sleep(p) seconds where p is the number of pages printed
-		if (m == 0){  /* if buffer is empty, then consumer waits until there's a request */
-			sem_wait(&emptyCount);
-		}
 	}
 }
