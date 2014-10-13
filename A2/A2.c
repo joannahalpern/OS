@@ -32,7 +32,7 @@
 
 int bufferSize, bufferIndex, *buffer;
 int *pidProd, *pidCons;
-int num, s;
+int num, s, pidP;
 
 /* semaphore s=1  and delay=0 */
 sem_t mutex; /* prevents multiple accesses to the buffer */
@@ -42,16 +42,16 @@ sem_t fillCount; /* checks if buffer is full  */
 int *producer(int *arg);
 int *consumer(int printerNum);
 
-int *producer(int *arg) {
-	int clientNum = (int) &arg;
-	printf("Client %d ",pidProd[clientNum]);
-	printf("I made it into the producer thread\n");
-	printf("blah blah blahhhhh\n");
-	printf("blah blah blahhhhh\n");
-	printf("blah blah blahhhhh\n");
-	printf("blah blah blahhhhh\n");
-	return 0;
-}
+//int *producer(int *arg) {
+////	int clientNum = (int) &arg;
+////	printf("Client %d ",pidProd[clientNum]);
+//	printf("I made it into the producer thread\n");
+//	printf("blah blah blahhhhh\n");
+//	printf("blah blah blahhhhh\n");
+//	printf("blah blah blahhhhh\n");
+//	printf("blah blah blahhhhh\n");
+//	return 0;
+//}
 
 int main(int argc, char *argv[]){
 	if (argc != 4){
@@ -70,11 +70,17 @@ int main(int argc, char *argv[]){
 	printf("buffer size is %d\n", bufferSize);
 	printf("everything is initialized\n\n");
 
-	pthread_t producerThreads[numProd];
-	pthread_t consumerThreads[numCons];
+	pthread_t p;
+	pidP = pthread_create(&p, NULL, producer, 0);
 
-	pidProd[0] = pthread_create(&producerThreads[0], NULL, producer, 0); //TODO: turn this into for loop
-	s = pthread_join(&producerThreads[0], NULL);
+
+//	pthread_t producerThreads[numProd];
+//	pthread_t consumerThreads[numCons];
+
+//	pidProd[0] = pthread_create(&producerThreads[0], NULL, producer, 0); //TODO: turn this into for loop
+//	s = pthread_create(&producerThreads[0], NULL, producer, 0); //TODO: turn this into for loop
+//
+//	s = pthread_join(&producerThreads[0], NULL);
 	printf("ahhhhh");
 	printf("ahhhhh\n");
 	printf("ahhhhh");
@@ -83,6 +89,7 @@ int main(int argc, char *argv[]){
 			printf("ahhhhh\n");
 			printf("ahhhhh");
 				printf("ahhhhh\n");
+
 				printf("ahhhhh");
 					printf("ahhhhh\n");
 //	pidCons[0] = pthread_create(&consumerThreads[0], NULL, consumer, 0);
@@ -91,29 +98,30 @@ int main(int argc, char *argv[]){
 	/*  */
 	/*  */
 	//TODO: join all the threads at the end (ie 2 for loops)
+	s = pthread_join(&p, NULL);
 	exit(EXIT_SUCCESS);
 }
 
 
 /* application that is printing */
-//void *producer(int *arg) {
-//	num=2;
-//	printf("Client %d has %d pages to print, ",pidProd[&arg], num);
-//	while (1) {
-//		//produce item
-//		//request to print r number of pages where r is a random number between 1 and 10
-//		num = 2;
-//		printf("Client %d has %d pages to print, ",pidProd[&arg], num);
-//		sem_wait(&emptyCount);
-//			sem_wait(&mutex);
-//				//put item in buffer
-//				buffer[bufferIndex] = num;
-//				printf("puts request in buffer %d",bufferIndex);
-//				bufferIndex = (bufferIndex+1)%bufferSize; //increment bufferIndex
-//			sem_post(&mutex);
-//		sem_post(&fillCount);
-//	}
-//}
+void *producer(int *arg) {
+	num=2;
+	printf("Client %d has %d pages to print, ",pidProd[&arg], num);
+	while (1) {
+		//produce item
+		//request to print r number of pages where r is a random number between 1 and 10
+		num = 2;
+		printf("Client %d has %d pages to print, ",pidProd[&arg], num);
+		sem_wait(&emptyCount);
+			sem_wait(&mutex);
+				//put item in buffer
+				buffer[bufferIndex] = num;
+				printf("puts request in buffer %d",bufferIndex);
+				bufferIndex = (bufferIndex+1)%bufferSize; //increment bufferIndex
+			sem_post(&mutex);
+		sem_post(&fillCount);
+	}
+}
 /* printer */
 //printer also needs to sleep when printing the pages (if printing 6 pages should sleep for 6 second)
 int *consumer(int printerNum) {
