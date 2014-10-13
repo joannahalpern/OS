@@ -32,17 +32,28 @@
 
 int bufferSize, bufferIndex, *buffer;
 int *pidProd, *pidCons;
-int num;
+int num, s;
 
 /* semaphore s=1  and delay=0 */
 sem_t mutex; /* prevents multiple accesses to the buffer */
 sem_t emptyCount; /* checks if buffer is empty */
 sem_t fillCount; /* checks if buffer is full  */
 
-void *producer(int clientNum);
-void *consumer(int printerNum);
+int *producer(int *arg);
+int *consumer(int printerNum);
 
-void main(int argc, char *argv[]){
+int *producer(int *arg) {
+	int clientNum = (int) &arg;
+	printf("Client %d ",pidProd[clientNum]);
+	printf("I made it into the producer thread\n");
+	printf("blah blah blahhhhh\n");
+	printf("blah blah blahhhhh\n");
+	printf("blah blah blahhhhh\n");
+	printf("blah blah blahhhhh\n");
+	return 0;
+}
+
+int main(int argc, char *argv[]){
 	if (argc != 4){
 		printf("arguments need to be int in the format C P B");
 		perror("Wrong number of arguments");
@@ -56,40 +67,56 @@ void main(int argc, char *argv[]){
 	sem_init(&emptyCount, 0, bufferSize);
 	sem_init(&fillCount, 0, 0);
 
+	printf("buffer size is %d\n", bufferSize);
 	printf("everything is initialized\n\n");
 
 	pthread_t producerThreads[numProd];
 	pthread_t consumerThreads[numCons];
 
 	pidProd[0] = pthread_create(&producerThreads[0], NULL, producer, 0); //TODO: turn this into for loop
-	pidCons[0] = pthread_create(&consumerThreads[0], NULL, consumer, 0);
+	s = pthread_join(&producerThreads[0], NULL);
+	printf("ahhhhh");
+	printf("ahhhhh\n");
+	printf("ahhhhh");
+		printf("ahhhhh\n");
+		printf("ahhhhh");
+			printf("ahhhhh\n");
+			printf("ahhhhh");
+				printf("ahhhhh\n");
+				printf("ahhhhh");
+					printf("ahhhhh\n");
+//	pidCons[0] = pthread_create(&consumerThreads[0], NULL, consumer, 0);
 	/* producer generates requests to print r (random number) pages every 5 seconds */
 	/* producer will make new thread for each request */
 	/*  */
 	/*  */
+	//TODO: join all the threads at the end (ie 2 for loops)
+	exit(EXIT_SUCCESS);
 }
 
 
 /* application that is printing */
-void *producer(int clientNum) {
-	while (1) {
-		//produce item
-		//request to print r number of pages where r is a random number between 1 and 10
-		num = 2;
-		printf("Client %d has %d pages to print, ",pidProd[clientNum], num);
-		sem_wait(&emptyCount);
-			sem_wait(&mutex);
-				//put item in buffer
-				buffer[bufferIndex] = num;
-				printf("puts request in buffer %d",bufferIndex);
-				bufferIndex = (bufferIndex+1)%bufferSize; //increment bufferIndex
-			sem_post(&mutex);
-		sem_post(&fillCount);
-	}
-}
+//void *producer(int *arg) {
+//	num=2;
+//	printf("Client %d has %d pages to print, ",pidProd[&arg], num);
+//	while (1) {
+//		//produce item
+//		//request to print r number of pages where r is a random number between 1 and 10
+//		num = 2;
+//		printf("Client %d has %d pages to print, ",pidProd[&arg], num);
+//		sem_wait(&emptyCount);
+//			sem_wait(&mutex);
+//				//put item in buffer
+//				buffer[bufferIndex] = num;
+//				printf("puts request in buffer %d",bufferIndex);
+//				bufferIndex = (bufferIndex+1)%bufferSize; //increment bufferIndex
+//			sem_post(&mutex);
+//		sem_post(&fillCount);
+//	}
+//}
 /* printer */
 //printer also needs to sleep when printing the pages (if printing 6 pages should sleep for 6 second)
-void *consumer(int printerNum) {
+int *consumer(int printerNum) {
 	while (1) {
 		sem_wait(&fillCount);
 			sem_wait(&mutex);
@@ -98,5 +125,6 @@ void *consumer(int printerNum) {
 		sem_post(&emptyCount);
 		//consume - print the item
 		//should sleep(p) seconds where p is the number of pages printed
+		return 0;
 	}
 }
