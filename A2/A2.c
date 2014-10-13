@@ -29,10 +29,12 @@
 #include <semaphore.h>
 #include <pthread.h>
 #include <stdlib.h>
+#include <time.h>
 
 int bufferSize, bufferIndex;
-int buffer[], pidProd[], pidCons[];
-int s, pidP, pidC;
+int buffer[];
+int s;
+int i, j, k, m;
 
 /* semaphore s=1  and delay=0 */
 sem_t mutex; /* prevents multiple accesses to the buffer */
@@ -40,18 +42,7 @@ sem_t emptyCount; /* checks if buffer is empty */
 sem_t fillCount; /* checks if buffer is full  */
 
 int *producer(int *arg);
-int *consumer(int printerNum);
-
-//int *producer(int *arg) {
-////	int clientNum = (int) &arg;
-////	printf("Client %d ",pidProd[clientNum]);
-//	printf("I made it into the producer thread\n");
-//	printf("blah blah blahhhhh\n");
-//	printf("blah blah blahhhhh\n");
-//	printf("blah blah blahhhhh\n");
-//	printf("blah blah blahhhhh\n");
-//	return 0;
-//}
+int *consumer(int *arg);
 
 int main(int argc, char *argv[]){
 	if (argc != 4){
@@ -71,37 +62,30 @@ int main(int argc, char *argv[]){
 	printf("buffer size is %d\n", bufferSize);
 	printf("everything is initialized\n\n");
 
-	pthread_t p, c;
-	pidProd[0] = pthread_create(&p, NULL, producer, 0);
-	if (pidProd[0] != 0)
-		exit(EXIT_FAILURE);
-	pidC = pthread_create(&c, NULL, consumer, 5);
-//	if (pidC != 0)
-//		exit(EXIT_FAILURE);
+	pthread_t producerThreads[numProd], consumerThreads[numCons];
 
-	s = pthread_join(&p, NULL);
-	s = pthread_join(&c, NULL);
+	for (i=0; i<numProd; i++){
+		s = pthread_create(&producerThreads[i], NULL, producer, (void *) i);
+		if (s != 0) //pthread_creat() returns a 0 if it was successful else a positive int
+			exit(EXIT_FAILURE);
+	}
+	for(j=0; j<numCons; j++){
+		s = pthread_create(&consumerThreads[j], NULL, consumer, (void *) j);
+		if (s != 0)
+			exit(EXIT_FAILURE);
+	}
 
-//	pthread_t producerThreads[numProd];
-//	pthread_t consumerThreads[numCons];
-
-//	pidProd[0] = pthread_create(&producerThreads[0], NULL, producer, 0); //TODO: turn this into for loop
-//	s = pthread_create(&producerThreads[0], NULL, producer, 0); //TODO: turn this into for loop
-//
-//	s = pthread_join(&producerThreads[0], NULL);
-//	printf("ahhhhh");
-//	printf("ahhhhh\n");
-//	printf("ahhhhh");
-//	printf("ahhhhh\n");
-//	for (s=0; s<100; s++){
-//		printf("ahhhhh");
-//	}
-//	pidCons[0] = pthread_create(&consumerThreads[0], NULL, consumer, 0);
-	/* producer generates requests to print r (random number) pages every 5 seconds */
-	/* producer will make new thread for each request */
-	/*  */
-	/*  */
-	//TODO: join all the threads at the end (ie 2 for loops)
+	//Join all the threads to the main
+	for(k=0; k<numProd; k++){
+		s = pthread_join(&producerThreads[k], NULL);
+		if (s != 0)
+			exit(EXIT_FAILURE);
+	}
+	for(m=0; m<numCons; m++){
+		s = pthread_join(&consumerThreads[m], NULL);
+		if (s != 0)
+			exit(EXIT_FAILURE);
+	}
 
 	exit(EXIT_SUCCESS);
 }
@@ -109,28 +93,31 @@ int main(int argc, char *argv[]){
 
 /* application that is printing */
 int *producer(int *arg) {
-	int num;
+	srand(time(NULL));
+	int num, clientNum;
 	while (1) {
 		//produce item
 		//request to print r number of pages where r is a random number between 1 and 10
-		num = 2;
-		printf("Client %d has %d pages to print, ",9, num);
+		clientNum = (int) arg;
+		num = rand();
+		num = (num%10)+1;
+		printf("Client %d has %d pages to print, ",clientNum, num);
 		sem_wait(&emptyCount);
 			sem_wait(&mutex);
 				//put item in buffer
 				buffer[bufferIndex] = num;
 				printf("puts request in buffer %d\n",bufferIndex);
-//				bufferIndex = (bufferIndex+1)%bufferSize; //increment bufferIndex
-				bufferIndex++;
+				bufferIndex = (bufferIndex+1)%bufferSize; //increment bufferIndex
 			sem_post(&mutex);
 		sem_post(&fillCount);
 	}
 }
 /* printer */
 //printer also needs to sleep when printing the pages (if printing 6 pages should sleep for 6 second)
-int *consumer(int printerNum) {
-	int pages;
+int *consumer(int *arg) {
+	int pages, printerNum;
 	while (1) {
+		printerNum = (int) arg;
 		sem_wait(&fillCount);
 			sem_wait(&mutex);
 				//remove item from buffer
@@ -138,8 +125,9 @@ int *consumer(int printerNum) {
 				bufferIndex = (bufferIndex+bufferSize-1)%bufferSize;
 			sem_post(&mutex);
 		sem_post(&emptyCount);
-			printf("Printer %d starts printing %d pages from buffer %d", 9, pages, 9);
+			printf("Printer %d starts printing %d pages from buffer %d\n", printerNum, pages, bufferIndex);
 			sleep(pages);
+			printf("Printer %d finishes printing %d pages from buffer %d\n", printerNum, pages, bufferIndex);
 		//consume - print the item
 		//should sleep(p) seconds where p is the number of pages printed
 	}
